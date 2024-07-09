@@ -2,6 +2,7 @@ package sia.tacocloud.web;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
@@ -9,10 +10,11 @@ import org.springframework.web.bind.annotation.*;
 import sia.tacocloud.Ingredient;
 import sia.tacocloud.Taco;
 import sia.tacocloud.TacoOrder;
+import sia.tacocloud.data.IngredientRepository;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Slf4j
 @Controller
@@ -20,24 +22,20 @@ import java.util.stream.Collectors;
 @SessionAttributes("tacoOrder")
 public class DesignTacoController {
 
+    private final IngredientRepository ingredientRepository;
+
+    @Autowired
+    public DesignTacoController(IngredientRepository ingredientRepository) {
+        this.ingredientRepository = ingredientRepository;
+    }
+
     @ModelAttribute
     public void addIngredientsToModel(Model model) {
-        List<Ingredient> ingredients = Arrays.asList(
-          new Ingredient("FLTO", "Flour Tortilla", Ingredient.Type.WRAP),
-          new Ingredient("COTO", "Corn Tortilla", Ingredient.Type.WRAP),
-          new Ingredient("GRBF", "Ground Beef", Ingredient.Type.PROTEIN),
-          new Ingredient("CARN", "Carnitas", Ingredient.Type.PROTEIN),
-          new Ingredient("TMTO", "Tomato", Ingredient.Type.VEGGIES),
-          new Ingredient("LETC", "Lettuce", Ingredient.Type.VEGGIES),
-          new Ingredient("CHED", "Cheddar", Ingredient.Type.CHEESE),
-          new Ingredient("JACK", "Monterrey Jack", Ingredient.Type.CHEESE),
-          new Ingredient("SLSA", "Salsa", Ingredient.Type.SAUCE),
-          new Ingredient("SRCR", "Sour Cream", Ingredient.Type.SAUCE)
-        );
-
+        Iterable<Ingredient> ingredients = ingredientRepository.findAll();
+        List<Ingredient> ingredientList = StreamSupport.stream(ingredients.spliterator(), false).collect(Collectors.toList());
         Ingredient.Type[] types = Ingredient.Type.values();
-        for (Ingredient.Type type: types) {
-            model.addAttribute(type.toString().toLowerCase(), filterByType(ingredients, type));
+        for (Ingredient.Type type : types) {
+            model.addAttribute(type.toString().toLowerCase(), filterByType(ingredientList, type));
         }
     }
 
